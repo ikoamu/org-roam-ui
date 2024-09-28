@@ -25,7 +25,7 @@ import { LinksByNodeId, NodeByCite, NodeById, Scope } from '../../pages/index'
 import { Resizable } from 're-resizable'
 import { usePersistantState } from '../../util/persistant-state'
 import { initialFilter, TagColors } from '../config'
-import { DEFAULT_SECTION_OPEN } from '../constants/action'
+import { DEFAULT_SECTION_OPEN } from '../../constants/action'
 
 export interface SidebarProps {
   isOpen: boolean
