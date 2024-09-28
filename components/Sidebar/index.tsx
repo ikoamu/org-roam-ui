@@ -25,6 +25,7 @@ import { LinksByNodeId, NodeByCite, NodeById, Scope } from '../../pages/index'
 import { Resizable } from 're-resizable'
 import { usePersistantState } from '../../util/persistant-state'
 import { initialFilter, TagColors } from '../config'
+import { DEFAULT_SECTION_OPEN } from '../constants/action'
 
 export interface SidebarProps {
   isOpen: boolean
@@ -101,7 +102,7 @@ const Sidebar = (props: SidebarProps) => {
   const justificationList = ['justify', 'start', 'end', 'center']
   const [font, setFont] = useState('sans serif')
   const [indent, setIndent] = useState(0)
-  const [collapse, setCollapse] = useState(false)
+  const [collapse, setCollapse] = useState(!DEFAULT_SECTION_OPEN)
   //maybe want to close it when clicking outside, but not sure
   //const outsideClickRef = useRef();
   return (

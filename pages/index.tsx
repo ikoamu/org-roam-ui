@@ -66,6 +66,7 @@ import { getLinkColor } from '../util/getLinkColor'
 import { Search } from '../components/Search'
 import { useRouter } from "next/router";
 import { usePathname, useSearchParams } from 'next/navigation'
+import { TITLE_NAME } from '../constants/action'
 
 const d3promise = import('d3-force-3d')
 
@@ -110,7 +111,7 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>{process.env.NEXT_PUBLIC_TITLE ?? "ORUI"}</title>
+        <title>{TITLE_NAME}</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/themes/prism-tomorrow.min.css" />
       </Head>
       <GraphPage />
