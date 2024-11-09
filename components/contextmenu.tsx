@@ -1,53 +1,22 @@
-import React, { useRef } from 'react'
+import React from 'react'
 import {
-  Box,
   Menu,
   MenuItem,
   MenuList,
-  MenuGroup,
-  MenuItemOption,
-  MenuOptionGroup,
   Heading,
   MenuDivider,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
-  useDisclosure,
-  Button,
-  PopoverTrigger,
-  PopoverContent,
-  Popover,
-  Flex,
-  PopoverBody,
-  PopoverCloseButton,
-  PopoverArrow,
-  PopoverHeader,
-  PopoverFooter,
-  Portal,
-  Text,
-  VStack,
 } from '@chakra-ui/react'
 import {
-  DeleteIcon,
-  EditIcon,
-  CopyIcon,
-  AddIcon,
   ViewIcon,
-  ExternalLinkIcon,
-  ChevronRightIcon,
   PlusSquareIcon,
   MinusIcon,
 } from '@chakra-ui/icons'
 
-import { OrgRoamGraphReponse, OrgRoamLink, OrgRoamNode } from '../api'
-import { deleteNodeInEmacs, openNodeInEmacs, createNodeInEmacs } from '../util/webSocketFunctions'
+import { OrgRoamNode } from '../api'
 import { BiNetworkChart } from 'react-icons/bi'
 import { TagMenu } from './TagMenu'
 import { initialFilter, TagColors } from './config'
+import { useSearchParams } from 'next/navigation'
 
 export default interface ContextMenuProps {
   background: Boolean
@@ -67,22 +36,18 @@ export default interface ContextMenuProps {
 
 export const ContextMenu = (props: ContextMenuProps) => {
   const {
-    background,
     target,
-    nodeType,
     coordinates,
     handleLocal,
     menuClose,
     scope,
-    webSocket,
     setPreviewNode,
     setTagColors,
     tagColors,
     setFilter,
     filter,
-  } = props
-  const { isOpen, onOpen, onClose } = useDisclosure()
-  const copyRef = useRef<any>()
+  } = props;
+  const param = useSearchParams();
   return (
     <>
       <Menu defaultIsOpen closeOnBlur={false} onClose={() => menuClose()}>
@@ -90,7 +55,6 @@ export const ContextMenu = (props: ContextMenuProps) => {
           zIndex="overlay"
           bgColor="white"
           color="black"
-          //borderColor="gray.500"
           position="absolute"
           left={coordinates.left}
           top={coordinates.top}
@@ -130,42 +94,13 @@ export const ContextMenu = (props: ContextMenuProps) => {
                   Open local graph
                 </MenuItem>
               )}
-              {/* Doesn't work at the moment
-                            <MenuItem closeOnSelect={false} closeOnBlur={false}>
-                            <Box _hover={{ bg: 'gray.200' }} width="100%">
-                                <Popover
-                                    initialFocusRef={copyRef}
-                                    trigger="hover"
-                                    placement="right-start"
-                                    gutter={0}
-                                >
-                                    <PopoverTrigger>
-                                        <MenuItem closeOnSelect={false} icon={<CopyIcon />}>
-                                            <Flex justifyContent="space-between" alignItems="center">
-                                                Copy...
-                                                <ChevronRightIcon />
-                                            </Flex>
-                                        </MenuItem>
-                                    </PopoverTrigger>
-                                    <PopoverContent width={100}>
-                                        <Menu defaultIsOpen closeOnBlur={false} closeOnSelect={false}>
-                                            <MenuList bg="alt.100" zIndex="popover">
-                                                <MenuItem ref={copyRef}>ID</MenuItem>
-                                                <MenuItem>Title</MenuItem>
-                                                <MenuItem>File path</MenuItem>
-                                            </MenuList>
-                                        </Menu>
-                                    </PopoverContent>
-                                </Popover>
-                            </Box>
-                        </MenuItem> */}
-
               <MenuItem
                 icon={<ViewIcon />}
                 onClick={() => {
                   setPreviewNode(target)
                   if (target) {
-                    history.replaceState(null, '', window.location.pathname + `#${target.id}`)
+                    console.log("search is ", window.location.search)
+                    history.replaceState(null, '', window.location.pathname + window.location.search + `#${target.id}`);
                   }
                 }}
               >
@@ -180,30 +115,3 @@ export const ContextMenu = (props: ContextMenuProps) => {
     </>
   )
 }
-
-/* <Box>
- *     <Popover>
- *         <PopoverTrigger>
- *                 Permenantly delete node
- *             </MenuItem>
- *         </PopoverTrigger>
- *         <PopoverContent borderColor="red.500" _focus={{}}>
- *             <PopoverHeader fontWeight="semibold">Delete Node?</PopoverHeader>
- *             <PopoverArrow />
- *             <PopoverCloseButton onClick={onClose} />
- *             <PopoverBody>
- *                 This will permanently delete your node! Are you sure you want to do this?
- *             </PopoverBody>
- *             <PopoverFooter>
- *                 <Flex justifyContent="space-between" py={1}>
- *                     <Button colorScheme="gray" bg="gray.800" color="alt.100" width={30} onClick={onClose}>
- *                         Nah
- *                     </Button>
- *                     <Button colorScheme="red" variant="link" onClick={onClose}>
- *                         Delete node
- *                     </Button>
- *                 </Flex>
- *             </PopoverFooter>
- *         </PopoverContent>
- *     </Popover>
- * </Box> */
