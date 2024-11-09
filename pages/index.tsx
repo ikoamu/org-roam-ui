@@ -1,20 +1,17 @@
-import { HamburgerIcon } from '@chakra-ui/icons'
 import graphDataJson from '../graphdata.json'
 import {
   Box,
   Flex,
-  Heading,
   IconButton,
-  Slide,
   Tooltip,
   useDisclosure,
   useOutsideClick,
   useTheme,
 } from '@chakra-ui/react'
 import { useAnimation } from '@lilib/hooks'
-import { useWindowSize, useWindowWidth } from '@react-hook/window-size'
+import { useWindowSize } from '@react-hook/window-size'
 import * as d3int from 'd3-interpolate'
-import { GraphData, LinkObject, NodeObject } from 'force-graph'
+import { GraphData, NodeObject } from 'force-graph'
 import Head from 'next/head'
 import React, {
   ComponentPropsWithoutRef,
@@ -64,8 +61,7 @@ import { getNodeColor } from '../util/getNodeColor'
 import { isLinkRelatedToNode } from '../util/isLinkRelatedToNode'
 import { getLinkColor } from '../util/getLinkColor'
 import { Search } from '../components/Search'
-import { useRouter } from "next/router";
-import { usePathname, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { TITLE_NAME } from '../constants/action'
 
 const d3promise = import('d3-force-3d')
@@ -123,7 +119,8 @@ export function GraphPage() {
   const [threeDim, setThreeDim] = usePersistantState('3d', false)
   const [tagColors, setTagColors] = usePersistantState<TagColors>('tagCols', {})
   const [scope, setScope] = useState<Scope>({ nodeIds: [], excludedNodeIds: [] })
-
+  const params = useSearchParams();
+  const graphParam = params.get('graph');
   const [physics, setPhysics] = usePersistantState('physics', initialPhysics)
   const [filter, setFilter] = usePersistantState('filter', initialFilter)
   const [visuals, setVisuals] = usePersistantState('visuals', initialVisuals)
@@ -133,6 +130,13 @@ export function GraphPage() {
   const [mouse, setMouse] = usePersistantState('mouse', initialMouse)
   const [coloring, setColoring] = usePersistantState('coloring', initialColoring)
   const [local, setLocal] = usePersistantState('local', initialLocal)
+  const router = useRouter();
+
+  useEffect(() => {
+    if (graphParam === 'local' && window.location.hash) {
+      setScope({ nodeIds: [window.location.hash.replace('#', '')], excludedNodeIds: [] })
+    }
+  }, [graphParam]);
 
   const [
     previewNodeState,
@@ -366,75 +370,6 @@ export function GraphPage() {
   const WebSocketRef = useRef<ReconnectingWebSocket | null>(null)
 
   scopeRef.current = scope
-  const followBehavior = (
-    command: string,
-    emacsNode: string,
-    speed: number = 2000,
-    padding: number = 200,
-  ) => {
-    if (command === 'color') {
-      return
-    }
-    const fg = graphRef.current
-    const sr = scopeRef.current
-    const bh = behaviorRef.current
-    const links = linksByNodeIdRef.current[emacsNode] ?? []
-    const nodes = Object.fromEntries(
-      [emacsNode as string, ...links.flatMap((link) => [link.source, link.target])].map(
-        (nodeId) => [nodeId, {}],
-      ),
-    )
-    if (command === 'zoom') {
-      if (sr.nodeIds.length) {
-        setScope({ nodeIds: [], excludedNodeIds: [] })
-      }
-      setTimeout(
-        () => fg.zoomToFit(speed, padding, (node: NodeObject) => nodes[node.id as string]),
-        50,
-      )
-      return
-    }
-    if (!sr.nodeIds.length) {
-      setScope((current: Scope) => ({ ...current, nodeIds: [emacsNode] }))
-      setTimeout(() => {
-        fg.centerAt(0, 0, 10)
-        fg.zoomToFit(1, padding)
-      }, 50)
-      return
-    }
-    if (bh.localSame !== 'add') {
-      setScope((current: Scope) => ({ ...current, nodeIds: [emacsNode] }))
-      setTimeout(() => {
-        fg.centerAt(0, 0, 10)
-        fg.zoomToFit(1, padding)
-      }, 50)
-      return
-    }
-
-    // if the node is in the scoped nodes, add it to scope instead of replacing it
-    if (
-      !sr.nodeIds.includes(emacsNode) ||
-      !sr.nodeIds.some((scopeId: string) => {
-        return nodes[scopeId]
-      })
-    ) {
-      setScope((current: Scope) => ({ ...current, nodeIds: [emacsNode] }))
-      setTimeout(() => {
-        fg.centerAt(0, 0, 10)
-        fg.zoomToFit(1, padding)
-      }, 50)
-      return
-    }
-    setScope((currentScope: Scope) => ({
-      ...currentScope,
-      nodeIds: [...currentScope.nodeIds, emacsNode as string],
-    }))
-    setTimeout(() => {
-      fg.centerAt(0, 0, 10)
-      fg.zoomToFit(1, padding)
-    }, 50)
-  }
-
 
   useEffect(() => {
     const fg = graphRef.current
@@ -448,7 +383,7 @@ export function GraphPage() {
     setTimeout(() => {
       fg.zoomToFit(5, 200)
     }, 50)
-  }, [scope.nodeIds])
+  }, [physics.gravityOn, scope.nodeIds])
 
   const [windowWidth, windowHeight] = useWindowSize()
 
@@ -492,6 +427,9 @@ export function GraphPage() {
       return
     }
     if (command === 'replace') {
+      const newParams = new URLSearchParams({ graph: 'local' });
+      const newUrl = `${window.location.pathname}?${newParams.toString()}#${node.id}`;
+      history.replaceState(null, '', newUrl);
       setScope({ nodeIds: [node.id], excludedNodeIds: [] })
       return
     }
@@ -600,12 +538,6 @@ export function GraphPage() {
         <Box position="relative" zIndex={4} width="100%">
           <Flex className="headerBar" h={10} flexDir="column">
             <Flex alignItems="center" h={10} justifyContent="flex-end">
-              {/* <Flex flexDir="row" alignItems="center">
-               *   <Box color="blue.500" bgColor="alt.100" h="100%" p={3} mr={4}>
-               *     {mainItem.icon}
-               *   </Box>
-               *   <Heading size="sm">{mainItem.title}</Heading>
-               * </Flex> */}
               <Flex height="100%" flexDirection="row">
                 {scope.nodeIds.length > 0 && (
                   <Tooltip label="Return to main graph">
@@ -613,12 +545,14 @@ export function GraphPage() {
                       m={1}
                       icon={<BiNetworkChart />}
                       aria-label="Exit local mode"
-                      onClick={() =>
+                      onClick={() => {
+                        const hash = window.location.hash;
+                        history.replaceState(null, '', hash ? window.location.pathname : window.location.pathname + `#${hash}`);
                         setScope((currentScope: Scope) => ({
                           ...currentScope,
                           nodeIds: [],
                         }))
-                      }
+                      }}
                       variant="subtle"
                     />
                   </Tooltip>
@@ -628,6 +562,7 @@ export function GraphPage() {
                   setPreviewNode={setPreviewNode}
                   onClickResultItem={(id) => {
                     setEmacsNodeId(id)
+                    setScope({ nodeIds: [], excludedNodeIds: [] })
                   }}
                 />
                 <Tooltip label={isOpen ? 'Close sidebar' : 'Open sidebar'}>
@@ -775,7 +710,7 @@ export const Graph = function (props: GraphProps) {
     switch (click) {
       case mouse.preview: {
         setPreviewNode(node)
-        history.replaceState(null, '', window.location.pathname + `#${node.id}`)
+        history.replaceState(null, '', window.location.pathname + window.location.search + `#${node.id}`)
         break
       }
       case mouse.local: {
